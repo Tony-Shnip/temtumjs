@@ -14,7 +14,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "mkdir -p dist && babel src --out-dir dist",
+    "build": "rm -rf dist && mkdir dist && babel src --out-dir dist",
     "prepublish": "npm run build"
   },
   "author": "",
@@ -26,7 +26,8 @@
   "dependencies": {
     "request": "2.88.0",
     "request-promise-native": "1.0.7",
-    "secp256k1": "3.7.1"
+    "secp256k1": "3.7.1",
+    "zstd-lib": "github:temtum/zstd-lib"
   },
   "devDependencies": {
     "@babel/cli": "7.4.4",

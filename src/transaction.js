@@ -1,5 +1,7 @@
 const crypto = require('crypto');
+const fs = require('fs');
 const secp256k1 = require('secp256k1');
+const zstd = require('zstd-lib');
 
 class Transaction {
   static getTimestamp() {
@@ -61,8 +63,8 @@ class Transaction {
     }
   }
 
-  constructor() {
-    this.type = 'regular';
+  constructor(type) {
+    this.type = type ? type : 'regular';
     this.txIns = [];
     this.txOuts = [];
   }
@@ -139,6 +141,119 @@ class Transaction {
 
     this.id = Transaction.sha256Hex(params.join(''));
     this.txIns = Transaction.signInputs(this.id, utxo, privateKey);
+  }
+
+  createWithData(senderAddress, recipientAddress, data, dataHash, privateKey){
+    this.timestamp = Transaction.getTimestamp();
+
+    if (data) {
+      if (data[0].toString() === '37' 
+      && data[1].toString() === '80' 
+      && data[2].toString() === '68' 
+      && data[3].toString() === '70' 
+      && data[4].toString() === '45') {
+
+        data = zstd.compressSync(data, { level: 5 });
+        const txData = [...data];
+
+        this.txIns = [
+          {
+            address: senderAddress,
+            amount: 0,
+            dataHash: '',
+          }
+        ];
+        this.txOuts = [
+          {
+            address: recipientAddress,
+            amount: 0,
+            dataHash: '',
+            data: {
+              type: 'pdf',
+              data: txData
+            }
+          }
+        ];
+  
+        this.txOuts[0].dataHash = Transaction.sha256Hex(this.txOuts[0].data.data.join(''));
+        this.txIns[0].dataHash = Transaction.sha256Hex(this.txOuts[0].data.data.join(''));
+  
+        this.signData(privateKey);
+  
+        this.txOuts[0].dataHash = '';
+      } else {
+        throw new Error(
+          'Wrong data type.'
+        );
+      }
+    } else {
+      this.txIns = [
+        {
+          address: senderAddress,
+          amount: 0,
+          dataHash: dataHash
+        }
+      ];
+      this.txOuts = [
+        {
+          address: recipientAddress,
+          amount: 0,
+          dataHash: dataHash
+        }
+      ];
+
+      this.signData(privateKey);
+    }
+
+    const tx = {
+      type: this.type,
+      txIns: this.txIns,
+      txOuts: this.txOuts,
+      timestamp: this.timestamp,
+      id: this.id,
+    };
+
+    return Buffer.from(JSON.stringify(tx)).toString('hex');
+  }
+
+  signData(privateKey) {
+    const outputs = JSON.stringify(this.txOuts, (key, value) => {
+      if (key === 'data') {
+        return undefined;
+      }
+
+      return value;
+    });
+
+    const params = [
+      this.type,
+      this.timestamp,
+      JSON.stringify(this.txIns),
+      outputs
+    ];
+
+    this.id = Transaction.sha256Hex(params.join(''));
+
+    this.txIns = Transaction.signDataInputs(this.id, this.txIns, privateKey);
+  }
+
+  static signDataInputs(id, tx, privateKey) {
+    const input = tx[0];
+    const params = [
+      id,
+      input.amount,
+      input.address,
+      input.dataHash
+    ];
+
+    const key = Transaction.sha256Hex(params.join(''));
+    const message = secp256k1.sign(
+      Buffer.from(key, 'hex'),
+      Buffer.from(privateKey, 'hex')
+    );
+    input.signature = message.signature.toString('hex');
+
+    return tx;
   }
 }
 
