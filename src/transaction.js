@@ -63,8 +63,8 @@ class Transaction {
     }
   }
 
-  constructor(type) {
-    this.type = type ? type : 'regular';
+  constructor(type = 'regular') {
+    this.type = type;
     this.txIns = [];
     this.txOuts = [];
   }
@@ -143,7 +143,7 @@ class Transaction {
     this.txIns = Transaction.signInputs(this.id, utxo, privateKey);
   }
 
-  createWithData(senderAddress, recipientAddress, data, dataHash, privateKey){
+  createWithData(senderAddress, recipientAddress, data, dataHash, privateKey, token){
     this.timestamp = Transaction.getTimestamp();
 
     if (data) {
@@ -161,6 +161,7 @@ class Transaction {
             address: senderAddress,
             amount: 0,
             dataHash: '',
+            token: token
           }
         ];
         this.txOuts = [
@@ -191,7 +192,8 @@ class Transaction {
         {
           address: senderAddress,
           amount: 0,
-          dataHash: dataHash
+          dataHash: dataHash,
+          token: token,
         }
       ];
       this.txOuts = [
