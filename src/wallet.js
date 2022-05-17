@@ -39,14 +39,7 @@ class Wallet {
       json: {signature, expirationTime},
       resolveWithFullResponse: true
     }
-    request(options)
-      .then(res => {
-        console.log(res.token);
-        return res.token;
-      })
-      .catch(err => {
-        console.log(err);
-      })
+    return request(options)
 
   }
 

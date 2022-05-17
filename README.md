@@ -45,6 +45,44 @@ wallet.getUnspent(PUBLIC_KEY).then((response) => {
 });
 ```
 
+## Data transactions sending example
+
+```javascript
+const Transaction = require('temtumjs').Transaction;
+const Wallet = require('temtumjs').Wallet;
+const fs = require('fs');
+
+// Your Temtum wallet keys. If you don't have a key pair, you can generate one using Wallet.generateKeyPair method
+const PUBLIC_KEY = 'your_temtum_public_key';
+const PRIVATE_KEY = 'your_temtum_private_key';
+const API_URL = 'your_temtum_api_url';
+const RECIPIENT_ADDRESS = 'recipient_public-key';
+
+// Create data transaction and wallet instance
+const transaction = new Transaction('data');
+const wallet = new Wallet(API_URL);
+
+//only whitelisted addresses can add data to blockchain
+const data = '';
+
+//to get data that belongs to the address -> GET ${API_URL}/address/:address/data
+const dataHash = '39156496b0b74926a6b344dc55aff34aba706c96404ae91fafc61314e15c1470';
+
+//access token expiration time (in seconds)
+const expirationTime = 1000;
+
+// if you already have access token, you can skip getTokenForDataCreation function call
+wallet.getTokenForDataCreation(sender, privateKey, expirationTime)
+  .then(res => {
+
+    //to send data to another address 'data' should be false
+    const txHex = tx.createWithData(sender, recipient, data, dataHash, privateKey, res.body.token);
+
+    wallet.sendTransaction(txHex);
+  })
+
+```
+
 ## API doc
 
 ### Transaction
