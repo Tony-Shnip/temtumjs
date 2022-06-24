@@ -43,10 +43,10 @@ class Wallet {
 
   }
 
-  sendTransaction(txHex) {
+  sendTransaction(txHex, url = '') {
     return request({
       method: 'POST',
-      uri: `${this.url}/transaction/send`,
+      uri: `${url}/transaction/send`,
       json: {txHex}
     });
   }
